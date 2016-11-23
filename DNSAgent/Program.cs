@@ -272,6 +272,48 @@ namespace DnsAgent
                 var serializer = JsonSerializer.CreateDefault();
                 rules = serializer.Deserialize<Rules>(jsonTextReader) ?? new Rules();
             }
+
+            var hostRules = ReadHostRules();
+            if(hostRules != null && hostRules.Count > 0)
+            {
+                Logger.Info("Read config from host file {0} lines", hostRules.Count);
+                rules.AddRange(hostRules);
+            }
+            return rules;
+        }
+
+        private static Rules ReadHostRules()
+        {
+            var path = Path.Combine(Environment.CurrentDirectory, "hosts");
+            if(!File.Exists(path))
+            {
+                return null;
+            }
+
+            Rules rules = new Rules();
+            using (var file = File.Open(path, FileMode.Open))
+            using (var reader = new StreamReader(file))
+            {
+                var content = reader.ReadToEnd();
+                var lines = content.Split(new string[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach(var line in lines)
+                {
+                    // Skip comments
+                    if(line.Trim().StartsWith("#"))
+                    {
+                        continue;
+                    }
+                    var lineSplit = line.Split(new string[] { "\r", "\n", " ", "\t" }, StringSplitOptions.RemoveEmptyEntries);
+                    if (lineSplit.Length == 2)
+                    {
+                        rules.Add(new Rule()
+                        {
+                            Address = lineSplit[0],
+                            Pattern = lineSplit[1]
+                        });
+                    }
+                }
+            }
             return rules;
         }
 

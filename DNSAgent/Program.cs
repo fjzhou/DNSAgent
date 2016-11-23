@@ -309,7 +309,7 @@ namespace DnsAgent
                         rules.Add(new Rule()
                         {
                             Address = lineSplit[0],
-                            Pattern = lineSplit[1]
+                            Pattern = "^" + lineSplit[1] + "$",
                         });
                     }
                 }
